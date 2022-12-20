@@ -1,0 +1,41 @@
+---
+ - name: working on assignment6
+   hosts: all
+   become: yes
+   vars:
+     app_name: nginx
+   tasks:
+     - name: install nginx in ubuntu
+       apt:
+         name: "{{ app_name }}"
+         state: present
+         update_cache: yes
+         notify: restart_nginx
+     - name: create empty file
+       file:
+         path: /tmp/opstree.conf
+         state: touch
+
+     - name: Copy file 
+       ansible.builtin.copy:
+         src: /tmp/opstree.conf
+         dest: /etc/nginx/site-available/
+     - name: Create a Tomcat User
+       user:
+         name: tomcat
+     - name: Create a Tomcat Group
+       group:
+         name: tomcat
+     - name: Change ownership of tomcat directory
+       file:
+         path: /opt/tomcat
+         owner: tomcat
+         group: tomcat
+         mode: "u+rwx,g+rx,o=rx"
+         state: directory
+
+   handlers:
+     - name: restart_nginx
+       service:
+         name: "{{ app_name }}"
+         state: restarted
