@@ -1,0 +1,39 @@
+---
+- name: setup Elasticsearch 
+  hosts: all
+  become: yes
+  vars:
+    name: elasticsearch_package
+  tasks:
+    # - name: Install Elasticsearch
+    #  apt:
+    #    name: "{{ elasticsearch_package }}"
+    #    state: present
+    #    update_cache: yes
+     
+    - name: Download elasticsearch 
+      ansible.builtin.get_url:
+        url: -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+      when: ansible_os_family == "Ubuntu"
+      notify: restart Elasticsearch
+    - name: Install Elasticsearch
+      yum:
+        name: "{{ elasticsearch_package }}"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "RedHad" 
+      notify: restart Elasticsearch
+    - name: Configure Elasticsearch 
+      template:
+        src: "{{ item | basename }}.j2"
+        dest: "{{ item }}"
+        owner: root
+        group: elasticsearch
+        mode: 0660
+    - name: Make sure Elasticsearch is running before proceeding
+      wait_for:
+         host: "{{ elasticsearch_network_host }}"
+         port: "{{ elasticsearch_http_port }}"
+         delay: 3
+         timeout: 300
+
